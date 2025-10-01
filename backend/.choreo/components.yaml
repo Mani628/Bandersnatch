@@ -9,3 +9,7 @@ endpoints:
   networkVisibilities:
     -Project
     -Public
+  dependencies:
+  connectionReferences:
+  - name: llama-connection
+    resourceRef: thirdparty:llama/v1

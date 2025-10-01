@@ -16,8 +16,15 @@ class StoryGenerator:
 
     @classmethod
     def _get_llm(cls):
-      return ChatGroq(
-          model="llama-3.3-70b-versatile",
+          mistral_api_key = os.getenv("CHOREO_LLAMA_CONNECTION_MISTRAL_API_KEY")
+          serviceurl = os.getenv("CHOREO_LLAMA_CONNECTION_SERVICEURL")
+          
+          if open_api_key && serviceurl:
+              return ChatOpenAI(model="gpt-40-mini", api_key = open_api_key, base_url=serviceurl )
+          
+          return ChatOpenAI(model="gpt-40-mini")
+          return ChatGroq(
+           model="llama-3.3-70b-versatile",
           temperature=0.7,
           api_key=os.getenv("OPENAI_API_KEY")  # fetch API key from environment
       ) 
