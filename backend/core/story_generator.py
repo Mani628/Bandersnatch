@@ -19,6 +19,7 @@ class StoryGenerator:
         mistral_api_key = os.getenv("CHOREO_LLAMA_CONNECTION_MISTRAL_API_KEY")
         serviceurl = os.getenv("CHOREO_LLAMA_CONNECTION_SERVICEURL")
 
+
         # If Mistral/Choreo connection is available
         if mistral_api_key and serviceurl:
             return ChatGroq(
@@ -31,8 +32,7 @@ class StoryGenerator:
         # Default fallback to Groq with standard API key
         return ChatGroq(
             model="llama-3.3-70b-versatile",
-            temperature=0.7,
-            api_key=os.getenv("GROQ_API_KEY")
+            temperature=0.7
         )
 
     @classmethod
