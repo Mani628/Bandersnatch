@@ -16,18 +16,24 @@ class StoryGenerator:
 
     @classmethod
     def _get_llm(cls):
-          mistral_api_key = os.getenv("CHOREO_LLAMA_CONNECTION_MISTRAL_API_KEY")
-          serviceurl = os.getenv("CHOREO_LLAMA_CONNECTION_SERVICEURL")
-          
-          if open_api_key && serviceurl:
-              return ChatOpenAI(model="gpt-40-mini", api_key = open_api_key, base_url=serviceurl )
-          
-          return ChatOpenAI(model="gpt-40-mini")
-          return ChatGroq(
-           model="llama-3.3-70b-versatile",
-          temperature=0.7,
-          api_key=os.getenv("OPENAI_API_KEY")  # fetch API key from environment
-      ) 
+        mistral_api_key = os.getenv("CHOREO_LLAMA_CONNECTION_MISTRAL_API_KEY")
+        serviceurl = os.getenv("CHOREO_LLAMA_CONNECTION_SERVICEURL")
+
+        # If Mistral/Choreo connection is available
+        if mistral_api_key and serviceurl:
+            return ChatGroq(
+                model="llama-3.3-70b-versatile",
+                temperature=0.7,
+                api_key=mistral_api_key,
+                base_url=serviceurl
+            )
+
+        # Default fallback to Groq with standard API key
+        return ChatGroq(
+            model="llama-3.3-70b-versatile",
+            temperature=0.7,
+            api_key=os.getenv("GROQ_API_KEY")
+        )
 
     @classmethod
     def generate_story(cls, db: Session, session_id: str, theme: str = "fantasy")-> Story:
