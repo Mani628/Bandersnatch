@@ -1,9 +1,8 @@
 from sqlalchemy.orm import Session
-
-from langchain_groq import ChatGroq
+from langchain_mistralai import ChatMistralAI
+from langchain.schema import SystemMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
-
 from core.prompts import STORY_PROMPT
 from models.story import Story, StoryNode
 from core.models import StoryLLMResponse, StoryNodeLLM
@@ -13,50 +12,59 @@ import os
 load_dotenv()
 
 class StoryGenerator:
+    
+    class MistralResponse:
+        def __init__(self, text:str):
+            self.content=text
 
+    # @classmethod
+    # def _get_llm(cls):
+    #     mistral_api_key = os.getenv("CHOREO_LLAMA_CONNECTION_MISTRAL_API_KEY")
+    #     serviceurl = os.getenv("CHOREO_LLAMA_CONNECTION_SERVICEURL")
+
+
+    #     # If Mistral/Choreo connection is available
+    #     if mistral_api_key and serviceurl:
+    #         return ChatGroq(
+    #             model="llama-3.3-70b-versatile",
+    #             temperature=0.7,
+    #             api_key=mistral_api_key,
+    #             base_url=serviceurl
+    #         )
+
+    #     # Default fallback to Groq with standard API key
+    #     return ChatGroq(
+    #         model="llama-3.3-70b-versatile",
+    #         temperature=0.7
+    #     )
+    
     @classmethod
     def _get_llm(cls):
-        mistral_api_key = os.getenv("CHOREO_LLAMA_CONNECTION_MISTRAL_API_KEY")
-        serviceurl = os.getenv("CHOREO_LLAMA_CONNECTION_SERVICEURL")
-
-
-        # If Mistral/Choreo connection is available
-        if mistral_api_key and serviceurl:
-            return ChatGroq(
-                model="llama-3.3-70b-versatile",
-                temperature=0.7,
-                api_key=mistral_api_key,
-                base_url=serviceurl
-            )
-
-        # Default fallback to Groq with standard API key
-        return ChatGroq(
-            model="llama-3.3-70b-versatile",
+        api_key = os.getenv("MISTRAL_API_KEY")
+        if not api_key:
+            raise ValueError("MISTRAL_API_KEY not found")
+        return ChatMistralAI(
+            model="mistral-small-2506",
             temperature=0.7
         )
-
     @classmethod
     def generate_story(cls, db: Session, session_id: str, theme: str = "fantasy")-> Story:
         llm = cls._get_llm()
         story_parser = PydanticOutputParser(pydantic_object=StoryLLMResponse)
 
-        prompt = ChatPromptTemplate.from_messages([
-            (
-                "system",
-                STORY_PROMPT
-            ),
-            (
-                "human",
-                f"Create the story with this theme: {theme}"
-            )
-        ]).partial(format_instructions=story_parser.get_format_instructions())
+        # Create messages for the LLM
+        messages = [
+            SystemMessage(content=STORY_PROMPT),
+            HumanMessage(content=f"Create the story with this theme: {theme}\n{story_parser.get_format_instructions()}")
+        ]
 
-        raw_response = llm.invoke(prompt.invoke({}))
-
+        # Generate story using Mistral
+        raw_response = llm.invoke(messages)
+        
         response_text = raw_response
         if hasattr(raw_response, "content"):
             response_text = raw_response.content
-
+            
         story_structure = story_parser.parse(response_text)
 
         story_db = Story(title=story_structure.title, session_id=session_id)
